@@ -1,0 +1,13 @@
+image: node:16.16.0-alpine
+
+stages:
+  - test
+
+test:
+  stage: test
+  cache:
+    paths:
+      - node_modules/
+  script:
+    - npm install
+    - npx hardhat test
