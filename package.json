@@ -1,0 +1,31 @@
+{
+  "name": "usdglo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "coverage": "npx hardhat coverage",
+    "solhint": "solhint 'contracts/**/*.sol'",
+    "slither": "slither .",
+    "fmt": "prettier --write './**/*.sol' './**/*.js' './**/*.ts' './**/*.json' './**/*.md' './**/*.yml'",
+    "prepare": "husky install"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^1.0.2",
+    "@openzeppelin/contracts-upgradeable": "^4.7.0",
+    "@openzeppelin/hardhat-upgrades": "^1.19.0",
+    "hardhat": "^2.10.1",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.3",
+    "prettier": "^2.7.1",
+    "prettier-plugin-solidity": "^1.0.0-dev.23",
+    "solhint": "^3.3.7"
+  },
+  "lint-staged": {
+    "*.{js,md,sol,json,yml,ts}": "prettier --write"
+  }
+}
