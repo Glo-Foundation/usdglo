@@ -39,17 +39,9 @@ function checkEmptySlots() {
     }
   });
 
-  it("empty gap from DenylistableUpgradeable", async function () {
-    const { usdglo } = await loadFixture(deployUSDGLOFixture);
-    for (let slot = 152; slot <= 200; slot++) {
-      const slotValue = await readSlot(usdglo.address, slot);
-      expect(parseUInt(slotValue)).to.equal(0);
-    }
-  });
-
   it("empty gap from ERC165Upgradeable", async function () {
     const { usdglo } = await loadFixture(deployUSDGLOFixture);
-    for (let slot = 201; slot <= 250; slot++) {
+    for (let slot = 151; slot <= 200; slot++) {
       const slotValue = await readSlot(usdglo.address, slot);
       expect(parseUInt(slotValue)).to.equal(0);
     }
@@ -57,7 +49,7 @@ function checkEmptySlots() {
 
   it("empty gap from AccessControlUpgradeable", async function () {
     const { usdglo } = await loadFixture(deployUSDGLOFixture);
-    for (let slot = 252; slot <= 300; slot++) {
+    for (let slot = 202; slot <= 250; slot++) {
       const slotValue = await readSlot(usdglo.address, slot);
       expect(parseUInt(slotValue)).to.equal(0);
     }
@@ -65,7 +57,7 @@ function checkEmptySlots() {
 
   it("empty gap from ERC1967UpgradeUpgradeable", async function () {
     const { usdglo } = await loadFixture(deployUSDGLOFixture);
-    for (let slot = 301; slot <= 350; slot++) {
+    for (let slot = 251; slot <= 300; slot++) {
       const slotValue = await readSlot(usdglo.address, slot);
       expect(parseUInt(slotValue)).to.equal(0);
     }
@@ -73,7 +65,7 @@ function checkEmptySlots() {
 
   it("empty gap from UUPSUpgradeable", async function () {
     const { usdglo } = await loadFixture(deployUSDGLOFixture);
-    for (let slot = 351; slot <= 400; slot++) {
+    for (let slot = 301; slot <= 350; slot++) {
       const slotValue = await readSlot(usdglo.address, slot);
       expect(parseUInt(slotValue)).to.equal(0);
     }
@@ -124,6 +116,7 @@ describe("storage slots of USDGLO", function () {
       const { usdglo, admin } = await loadFixture(deployUSDGLOFixture);
       const slot = 51;
       await usdglo.connect(admin).grantRole(MINTER_ROLE, admin.address);
+      await usdglo.connect(admin).grantRole(DENYLISTER_ROLE, admin.address);
 
       let slotValue = await readSlot(
         usdglo.address,
@@ -139,6 +132,20 @@ describe("storage slots of USDGLO", function () {
       expect(parseUInt(slotValue)).to.equal(100_000);
 
       await usdglo.connect(admin).burn(50_000);
+      slotValue = await readSlot(
+        usdglo.address,
+        getMappingSlot(usdglo.address, slot, admin.address)
+      );
+      expect(parseUInt(slotValue)).to.equal(50_000);
+
+      await usdglo.connect(admin).denylist(admin.address);
+      slotValue = await readSlot(
+        usdglo.address,
+        getMappingSlot(usdglo.address, slot, admin.address)
+      );
+      expect(parseUInt(slotValue)).to.equal((1n << 255n) | 50_000n);
+
+      await usdglo.connect(admin).undenylist(admin.address);
       slotValue = await readSlot(
         usdglo.address,
         getMappingSlot(usdglo.address, slot, admin.address)
@@ -233,39 +240,9 @@ describe("storage slots of USDGLO", function () {
       expect(parseUInt(byte32Hex)).to.equal(0);
     });
 
-    it("denylisted mapping", async function () {
-      const { usdglo, admin } = await loadFixture(deployUSDGLOFixture);
-      const slot = 151;
-      await usdglo.connect(admin).grantRole(DENYLISTER_ROLE, admin.address);
-      const [_, user] = await ethers.getSigners();
-
-      let slotValue = await readSlot(usdglo.address, slot);
-      expect(parseUInt(slotValue)).to.equal(0);
-
-      slotValue = await readSlot(
-        usdglo.address,
-        getMappingSlot(usdglo.address, slot, user.address)
-      );
-      expect(parseUInt(slotValue)).to.equal(0);
-
-      await usdglo.connect(admin).denylist(user.address);
-      slotValue = await readSlot(
-        usdglo.address,
-        getMappingSlot(usdglo.address, slot, user.address)
-      );
-      expect(parseUInt(slotValue)).to.equal(1);
-
-      await usdglo.connect(admin).undenylist(user.address);
-      slotValue = await readSlot(
-        usdglo.address,
-        getMappingSlot(usdglo.address, slot, user.address)
-      );
-      expect(parseUInt(slotValue)).to.equal(0);
-    });
-
     it("_roles mapping", async function () {
       const { usdglo, admin } = await loadFixture(deployUSDGLOFixture);
-      const slot = 251;
+      const slot = 201;
       const [_, user] = await ethers.getSigners();
 
       let slotValue = await readSlot(usdglo.address, slot);

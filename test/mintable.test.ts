@@ -39,6 +39,20 @@ describe("mintable functionality of USDGLO", function () {
       await usdglo.connect(user1).mint(user2.address, amount);
       expect(await usdglo.balanceOf(user2.address)).to.equal(amount);
     });
+
+    it("reverts mint if it makes totalSupply go over 2^255 - 1", async function () {
+      const { usdglo, admin } = await loadFixture(deployUSDGLOFixture);
+      const [_, user1, user2] = await ethers.getSigners();
+
+      await usdglo.connect(admin).grantRole(MINTER_ROLE, user1.address);
+
+      const amount = 1n << 255n;
+
+      await expect(
+        usdglo.connect(user1).mint(user2.address, amount)
+      ).to.be.revertedWithCustomError(usdglo, "IsOverSupplyCap");
+      expect(await usdglo.balanceOf(user2.address)).to.equal(0);
+    });
   });
 
   describe("event behaviour", function () {
@@ -104,6 +118,20 @@ describe("mintable functionality of USDGLO", function () {
       await expect(usdglo.connect(user1).mint(user2.address, amount))
         .to.be.revertedWithCustomError(usdglo, "IsDenylisted")
         .withArgs(user2.address);
+    });
+  });
+
+  describe("misc behaviour", function () {
+    it("mint must revert if mintee is zero address", async function () {
+      const { admin, usdglo } = await loadFixture(deployUSDGLOFixture);
+
+      await usdglo.connect(admin).grantRole(MINTER_ROLE, admin.address);
+
+      const amount = 1;
+
+      await expect(
+        usdglo.connect(admin).mint(ethers.constants.AddressZero, amount)
+      ).to.be.revertedWith("ERC20: mint to the zero address");
     });
   });
 });

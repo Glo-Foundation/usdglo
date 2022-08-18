@@ -9,3 +9,16 @@ export async function deployUSDGLOFixture() {
 
   return { usdglo, admin };
 }
+
+export async function deployMockUSDGLOFixture() {
+  const [admin] = await ethers.getSigners();
+  const USDGLO = await ethers.getContractFactory(
+    "MockUSDGlobalIncomeCoin",
+    admin
+  );
+
+  const usdglo = await upgrades.deployProxy(USDGLO, []);
+  await usdglo.deployed();
+
+  return { usdglo, admin };
+}

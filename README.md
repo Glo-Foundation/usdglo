@@ -2,6 +2,10 @@
 
 ## Tasks
 
+### Install dependencies
+
+`npm install`
+
 ### Setup git hooks
 
 `npm run prepare`

@@ -1,19 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "./DenylistableUpgradeable.sol";
+import "./ERC20Upgradeable.sol";
 
 /// @custom:security-contact Garm Lucassen <garm@globalincomecoin.com>
 contract USDGlobalIncomeCoin is
     Initializable,
     ERC20Upgradeable,
     PausableUpgradeable,
-    DenylistableUpgradeable,
     AccessControlUpgradeable,
     UUPSUpgradeable
 {
@@ -33,7 +31,6 @@ contract USDGlobalIncomeCoin is
     function initialize() public initializer {
         __ERC20_init("USD Global Income Coin", "USDGLO");
         __Pausable_init();
-        __Denylistable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
 
@@ -56,6 +53,13 @@ contract USDGlobalIncomeCoin is
         _undenylist(denylistee);
     }
 
+    function destroyDenylistedFunds(address denylistee)
+        external
+        onlyRole(DENYLISTER_ROLE)
+    {
+        _destroyDenylistedFunds(denylistee);
+    }
+
     function mint(address to, uint256 amount)
         external
         onlyRole(MINTER_ROLE)
@@ -65,37 +69,49 @@ contract USDGlobalIncomeCoin is
         emit Mint({minter: _msgSender(), to: to, amount: amount});
     }
 
-    function burn(uint256 amount) external onlyRole(MINTER_ROLE) {
+    function burn(uint256 amount)
+        external
+        onlyRole(MINTER_ROLE)
+        whenNotDenylisted(_msgSender())
+    {
         _burn(_msgSender(), amount);
         emit Burn({burner: _msgSender(), amount: amount});
+    }
+
+    function approve(address spender, uint256 amount)
+        public
+        virtual
+        override
+        whenNotPaused
+        returns (bool)
+    {
+        return super.approve(spender, amount);
+    }
+
+    function increaseAllowance(address spender, uint256 addedValue)
+        public
+        override
+        whenNotPaused
+        returns (bool)
+    {
+        return super.increaseAllowance(spender, addedValue);
+    }
+
+    function decreaseAllowance(address spender, uint256 subtractedValue)
+        public
+        override
+        whenNotPaused
+        returns (bool)
+    {
+        return super.decreaseAllowance(spender, subtractedValue);
     }
 
     function _beforeTokenTransfer(
         address from,
         address to,
         uint256 amount
-    )
-        internal
-        override
-        whenNotPaused
-        whenNotDenylisted(from)
-        whenNotDenylisted(to)
-    {
+    ) internal override whenNotPaused {
         super._beforeTokenTransfer(from, to, amount);
-    }
-
-    function _approve(
-        address owner,
-        address spender,
-        uint256 amount
-    )
-        internal
-        override
-        whenNotPaused
-        whenNotDenylisted(owner)
-        whenNotDenylisted(spender)
-    {
-        super._approve(owner, spender, amount);
     }
 
     function _authorizeUpgrade(address newImplementation)
