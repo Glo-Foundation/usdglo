@@ -19,6 +19,7 @@ describe("burn functionality of USDGLO", function () {
       const [_, user] = await ethers.getSigners();
 
       const amount = 100_000;
+
       const expectedRevertMessage = getAccessControlRevertMessage(
         MINTER_ROLE_NAME,
         user.address
@@ -35,6 +36,7 @@ describe("burn functionality of USDGLO", function () {
       await usdglo.connect(admin).grantRole(MINTER_ROLE, user.address);
 
       const amount = 100_000;
+
       await usdglo.connect(user).mint(user.address, amount);
 
       expect(await usdglo.balanceOf(user.address)).to.equal(amount);
@@ -51,6 +53,7 @@ describe("burn functionality of USDGLO", function () {
       await usdglo.connect(admin).grantRole(MINTER_ROLE, user.address);
 
       const amount = 100_000;
+
       await usdglo.connect(user).mint(user.address, amount);
 
       await expect(usdglo.connect(user).burn(amount))
@@ -70,6 +73,7 @@ describe("burn functionality of USDGLO", function () {
       await usdglo.connect(admin).grantRole(PAUSER_ROLE, user.address);
 
       const amount = 100_000;
+
       await usdglo.connect(user).mint(user.address, amount);
 
       await usdglo.connect(user).pause();
@@ -88,6 +92,7 @@ describe("burn functionality of USDGLO", function () {
       await usdglo.connect(admin).grantRole(MINTER_ROLE, user.address);
 
       const amount = 100_000;
+
       await usdglo.connect(user).mint(user.address, amount);
 
       await usdglo.connect(admin).grantRole(DENYLISTER_ROLE, admin.address);
@@ -96,6 +101,20 @@ describe("burn functionality of USDGLO", function () {
       await expect(usdglo.connect(user).burn(amount))
         .to.be.revertedWithCustomError(usdglo, "IsDenylisted")
         .withArgs(user.address);
+    });
+  });
+
+  describe("misc behaviour", function () {
+    it("reverts burn if burn amount exceeds balance", async function () {
+      const { admin, usdglo } = await loadFixture(deployUSDGLOFixture);
+
+      await usdglo.connect(admin).grantRole(MINTER_ROLE, admin.address);
+
+      const amount = 1;
+
+      await expect(usdglo.connect(admin).burn(amount)).to.be.revertedWith(
+        "ERC20: burn amount exceeds balance"
+      );
     });
   });
 });

@@ -8,6 +8,7 @@ import {
   getAccessControlRevertMessage,
   DENYLISTER_ROLE,
   DENYLISTER_ROLE_NAME,
+  MINTER_ROLE,
 } from "./utils";
 
 describe("denylistable functionality of USDGLO", function () {
@@ -60,6 +61,42 @@ describe("denylistable functionality of USDGLO", function () {
       await usdglo.connect(user1).undenylist(user2.address);
       expect(await usdglo.isDenylisted(user2.address)).to.be.false;
     });
+
+    it("reverts destroyDenylistedFunds if called by address without DENYLISTER_ROLE", async function () {
+      const { usdglo } = await loadFixture(deployUSDGLOFixture);
+      const [_, user1, user2] = await ethers.getSigners();
+
+      const expectedRevertMessage = getAccessControlRevertMessage(
+        DENYLISTER_ROLE_NAME,
+        user1.address
+      );
+      await expect(
+        usdglo.connect(user1).destroyDenylistedFunds(user2.address)
+      ).to.be.revertedWith(expectedRevertMessage);
+    });
+
+    it("successful destroyDenylistedFunds if called by address with DENYLISTER_ROLE", async function () {
+      const { usdglo, admin } = await loadFixture(deployUSDGLOFixture);
+      const [_, user1, user2] = await ethers.getSigners();
+
+      await usdglo.connect(admin).grantRole(DENYLISTER_ROLE, user1.address);
+      await usdglo.connect(admin).grantRole(MINTER_ROLE, user1.address);
+
+      const amount = 100_000;
+
+      await usdglo.connect(user1).mint(user2.address, amount);
+      expect(await usdglo.balanceOf(user2.address)).to.equal(amount);
+
+      await usdglo.connect(user1).denylist(user2.address);
+      expect(await usdglo.isDenylisted(user2.address)).to.be.true;
+      expect(await usdglo.balanceOf(user2.address)).to.equal(amount);
+
+      await usdglo.connect(user1).destroyDenylistedFunds(user2.address);
+      expect(await usdglo.balanceOf(user2.address)).to.equal(0);
+
+      await usdglo.connect(user1).undenylist(user2.address);
+      expect(await usdglo.balanceOf(user2.address)).to.equal(0);
+    });
   });
 
   describe("event behaviour", function () {
@@ -85,6 +122,22 @@ describe("denylistable functionality of USDGLO", function () {
         .to.emit(usdglo, "Undenylist")
         .withArgs(user1.address, user2.address);
     });
+
+    it("emits DestroyDenylistedFunds event on successful destroyDenylistedFunds", async function () {
+      const { usdglo, admin } = await loadFixture(deployUSDGLOFixture);
+      const [_, user1, user2] = await ethers.getSigners();
+
+      await usdglo.connect(admin).grantRole(DENYLISTER_ROLE, user1.address);
+      await usdglo.connect(admin).grantRole(MINTER_ROLE, user1.address);
+
+      const amount = 100_000;
+
+      await usdglo.connect(user1).mint(user2.address, amount);
+      await usdglo.connect(user1).denylist(user2.address);
+      await expect(usdglo.connect(user1).destroyDenylistedFunds(user2.address))
+        .to.emit(usdglo, "DestroyDenylistedFunds")
+        .withArgs(user1.address, user2.address, amount);
+    });
   });
 
   describe("denylisting conditions", function () {
@@ -108,6 +161,17 @@ describe("denylistable functionality of USDGLO", function () {
       await usdglo.connect(admin).grantRole(DENYLISTER_ROLE, user1.address);
 
       await expect(usdglo.connect(user1).undenylist(user2.address))
+        .to.be.revertedWithCustomError(usdglo, "IsNotDenylisted")
+        .withArgs(user2.address);
+    });
+
+    it("reverts destroyDenylistedFunds if denylistee is not currently denylisted", async function () {
+      const { usdglo, admin } = await loadFixture(deployUSDGLOFixture);
+      const [_, user1, user2] = await ethers.getSigners();
+
+      await usdglo.connect(admin).grantRole(DENYLISTER_ROLE, user1.address);
+
+      await expect(usdglo.connect(user1).destroyDenylistedFunds(user2.address))
         .to.be.revertedWithCustomError(usdglo, "IsNotDenylisted")
         .withArgs(user2.address);
     });
