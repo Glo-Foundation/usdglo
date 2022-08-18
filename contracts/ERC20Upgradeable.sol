@@ -483,13 +483,13 @@ contract ERC20Upgradeable is
      * is set to 1 indicating denylisting,
      * and false otherwise.
      */
-    function _isBalanceDenylisted(uint256 balance)
+    function _isBalanceDenylisted(uint256 userBalance)
         internal
         view
         virtual
         returns (bool)
     {
-        return balance >> 255 == 1;
+        return userBalance >> 255 == 1;
     }
 
     /**
@@ -517,12 +517,11 @@ contract ERC20Upgradeable is
      * @dev Throws if the high bit of the balance
      * is set to 1 indicating denylisting
      */
-    function _requireBalanceIsNotDenylisted(uint256 balance, address denylistee)
-        internal
-        view
-        virtual
-    {
-        if (_isBalanceDenylisted(balance)) {
+    function _requireBalanceIsNotDenylisted(
+        uint256 userBalance,
+        address denylistee
+    ) internal view virtual {
+        if (_isBalanceDenylisted(userBalance)) {
             revert IsDenylisted({denylistee: denylistee});
         }
     }
@@ -531,12 +530,11 @@ contract ERC20Upgradeable is
      * @dev Throws if the high bit of the balance
      * is set to 0 indicating non denylisting
      */
-    function _requireBalanceIsDenylisted(uint256 balance, address denylistee)
-        internal
-        view
-        virtual
-    {
-        if (!_isBalanceDenylisted(balance)) {
+    function _requireBalanceIsDenylisted(
+        uint256 userBalance,
+        address denylistee
+    ) internal view virtual {
+        if (!_isBalanceDenylisted(userBalance)) {
             revert IsNotDenylisted({denylistee: denylistee});
         }
     }
@@ -553,9 +551,9 @@ contract ERC20Upgradeable is
      * @dev Denylists a denylistee.
      */
     function _denylist(address denylistee) internal virtual {
-        uint256 balance = _balances[denylistee];
-        _requireBalanceIsNotDenylisted(balance, denylistee);
-        _balances[denylistee] = balance | (uint256(1) << 255);
+        uint256 userBalance = _balances[denylistee];
+        _requireBalanceIsNotDenylisted(userBalance, denylistee);
+        _balances[denylistee] = userBalance | (uint256(1) << 255);
         emit Denylist({denylister: _msgSender(), denylistee: denylistee});
     }
 
@@ -563,9 +561,9 @@ contract ERC20Upgradeable is
      * @dev Undenylists a denylistee.
      */
     function _undenylist(address denylistee) internal virtual {
-        uint256 balance = _balances[denylistee];
-        _requireBalanceIsDenylisted(balance, denylistee);
-        _balances[denylistee] = balance & ~(uint256(1) << 255);
+        uint256 userBalance = _balances[denylistee];
+        _requireBalanceIsDenylisted(userBalance, denylistee);
+        _balances[denylistee] = userBalance & ~(uint256(1) << 255);
         emit Undenylist({denylister: _msgSender(), denylistee: denylistee});
     }
 
@@ -573,9 +571,9 @@ contract ERC20Upgradeable is
      * @dev Destroys balance of a denylistee.
      */
     function _destroyDenylistedFunds(address denylistee) internal virtual {
-        uint256 balance = _balances[denylistee];
-        _requireBalanceIsDenylisted(balance, denylistee);
-        uint256 denylistedFunds = balance & ~(uint256(1) << 255);
+        uint256 userBalance = _balances[denylistee];
+        _requireBalanceIsDenylisted(userBalance, denylistee);
+        uint256 denylistedFunds = userBalance & ~(uint256(1) << 255);
         _balances[denylistee] = uint256(1) << 255;
         _totalSupply -= denylistedFunds;
         emit DestroyDenylistedFunds({
