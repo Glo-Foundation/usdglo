@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity 0.8.16;
 
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -69,11 +69,7 @@ contract USDGlobalIncomeCoin is
         emit Mint({minter: _msgSender(), to: to, amount: amount});
     }
 
-    function burn(uint256 amount)
-        external
-        onlyRole(MINTER_ROLE)
-        whenNotDenylisted(_msgSender())
-    {
+    function burn(uint256 amount) external onlyRole(MINTER_ROLE) {
         _burn(_msgSender(), amount);
         emit Burn({burner: _msgSender(), amount: amount});
     }
