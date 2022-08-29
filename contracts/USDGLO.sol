@@ -74,34 +74,6 @@ contract USDGlobalIncomeCoin is
         emit Burn({burner: _msgSender(), amount: amount});
     }
 
-    function approve(address spender, uint256 amount)
-        public
-        virtual
-        override
-        whenNotPaused
-        returns (bool)
-    {
-        return super.approve(spender, amount);
-    }
-
-    function increaseAllowance(address spender, uint256 addedValue)
-        public
-        override
-        whenNotPaused
-        returns (bool)
-    {
-        return super.increaseAllowance(spender, addedValue);
-    }
-
-    function decreaseAllowance(address spender, uint256 subtractedValue)
-        public
-        override
-        whenNotPaused
-        returns (bool)
-    {
-        return super.decreaseAllowance(spender, subtractedValue);
-    }
-
     function _beforeTokenTransfer(
         address from,
         address to,
