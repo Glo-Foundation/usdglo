@@ -7,24 +7,6 @@ import { ethers } from "hardhat";
 import { MINTER_ROLE, PAUSER_ROLE, DENYLISTER_ROLE } from "./utils";
 
 describe("approve functionality of USDGLO", function () {
-  describe("paused behaviour", function () {
-    it("reverts approve if USDGLO is paused", async function () {
-      const { admin, usdglo } = await loadFixture(deployUSDGLOFixture);
-      const [_, user1, user2] = await ethers.getSigners();
-
-      await usdglo.connect(admin).grantRole(MINTER_ROLE, user1.address);
-      await usdglo.connect(admin).grantRole(PAUSER_ROLE, user1.address);
-
-      await usdglo.connect(user1).pause();
-
-      const amount = 100_000;
-
-      await expect(
-        usdglo.connect(user1).approve(user2.address, amount)
-      ).to.be.revertedWith("Pausable: paused");
-    });
-  });
-
   describe("denylisted behaviour", function () {
     it("reverts approve if sender is denylisted", async function () {
       const { admin, usdglo } = await loadFixture(deployUSDGLOFixture);
@@ -100,24 +82,6 @@ describe("approve functionality of USDGLO", function () {
 });
 
 describe("increaseAllowance functionality of USDGLO", function () {
-  describe("paused behaviour", function () {
-    it("reverts increaseAllowance if USDGLO is paused", async function () {
-      const { admin, usdglo } = await loadFixture(deployUSDGLOFixture);
-      const [_, user1, user2] = await ethers.getSigners();
-
-      await usdglo.connect(admin).grantRole(MINTER_ROLE, user1.address);
-      await usdglo.connect(admin).grantRole(PAUSER_ROLE, user1.address);
-
-      await usdglo.connect(user1).pause();
-
-      const amount = 100_000;
-
-      await expect(
-        usdglo.connect(user1).increaseAllowance(user2.address, amount)
-      ).to.be.revertedWith("Pausable: paused");
-    });
-  });
-
   describe("denylisted behaviour", function () {
     it("reverts increaseAllowance if sender is denylisted", async function () {
       const { admin, usdglo } = await loadFixture(deployUSDGLOFixture);
@@ -158,25 +122,6 @@ describe("increaseAllowance functionality of USDGLO", function () {
 });
 
 describe("decreaseAllowance functionality of USDGLO", function () {
-  describe("paused behaviour", function () {
-    it("reverts decreaseAllowance if USDGLO is paused", async function () {
-      const { admin, usdglo } = await loadFixture(deployUSDGLOFixture);
-      const [_, user1, user2] = await ethers.getSigners();
-
-      await usdglo.connect(admin).grantRole(MINTER_ROLE, user1.address);
-      await usdglo.connect(admin).grantRole(PAUSER_ROLE, user1.address);
-
-      const amount = 100_000;
-
-      await usdglo.connect(user1).increaseAllowance(user2.address, amount);
-      await usdglo.connect(user1).pause();
-
-      await expect(
-        usdglo.connect(user1).decreaseAllowance(user2.address, amount)
-      ).to.be.revertedWith("Pausable: paused");
-    });
-  });
-
   describe("denylisted behaviour", function () {
     it("reverts decreaseAllowance if sender is denylisted", async function () {
       const { admin, usdglo } = await loadFixture(deployUSDGLOFixture);
