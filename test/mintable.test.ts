@@ -48,9 +48,9 @@ describe("mintable functionality of USDGLO", function () {
 
       const amount = 1n << 255n;
 
-      await expect(
-        usdglo.connect(user1).mint(user2.address, amount)
-      ).to.be.revertedWithCustomError(usdglo, "IsOverSupplyCap");
+      await expect(usdglo.connect(user1).mint(user2.address, amount))
+        .to.be.revertedWithCustomError(usdglo, "IsOverSupplyCap")
+        .withArgs(amount);
       expect(await usdglo.balanceOf(user2.address)).to.equal(0);
     });
   });
