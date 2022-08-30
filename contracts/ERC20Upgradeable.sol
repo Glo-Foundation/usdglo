@@ -9,7 +9,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 error IsNotDenylisted(address denylistee);
 error IsDenylisted(address denylistee);
-error IsOverSupplyCap();
+error IsOverSupplyCap(uint256 supply);
 
 /**
  * @dev Implementation of the {IERC20} interface.
@@ -50,6 +50,9 @@ contract ERC20Upgradeable is
 
     string private _name;
     string private _symbol;
+
+    uint256 private constant _balanceDenyFlagSetMask = uint256(1) << 255;
+    uint256 private constant _maxAllowedSupply = (uint256(1) << 255) - 1;
 
     /**
      * @dev Sets the values for {name} and {symbol}.
@@ -124,7 +127,7 @@ contract ERC20Upgradeable is
         override
         returns (uint256)
     {
-        return _balances[account] & ~(uint256(1) << 255);
+        return _balances[account] & ~_balanceDenyFlagSetMask;
     }
 
     /**
@@ -289,21 +292,24 @@ contract ERC20Upgradeable is
         require(from != address(0), "ERC20: transfer from the zero address");
         require(to != address(0), "ERC20: transfer to the zero address");
 
-        _beforeTokenTransfer(from, to, amount);
-
         uint256 fromBalance = _balances[from];
         _requireBalanceIsNotDenylisted(fromBalance, from);
+
+        uint256 toBalance = _balances[to];
+        _requireBalanceIsNotDenylisted(toBalance, to);
+
+        _beforeTokenTransfer(from, to, amount);
+
         require(
             fromBalance >= amount,
             "ERC20: transfer amount exceeds balance"
         );
         unchecked {
             _balances[from] = fromBalance - amount;
+            // Overflow not possible: the sum of all balances is capped by totalSupply, and the sum is preserved by
+            // decrementing then incrementing.
+            _balances[to] = toBalance + amount;
         }
-        uint256 toBalance = _balances[to];
-        _requireBalanceIsNotDenylisted(toBalance, to);
-        toBalance += amount;
-        _balances[to] = toBalance;
 
         emit Transfer(from, to, amount);
 
@@ -322,18 +328,21 @@ contract ERC20Upgradeable is
     function _mint(address account, uint256 amount) internal virtual {
         require(account != address(0), "ERC20: mint to the zero address");
 
+        uint256 accountBalance = _balances[account];
+        _requireBalanceIsNotDenylisted(accountBalance, account);
+
         _beforeTokenTransfer(address(0), account, amount);
 
         uint256 newTotalSupply = _totalSupply + amount;
-        if (newTotalSupply > (uint256(1) << 255) - 1) {
-            revert IsOverSupplyCap();
+        if (newTotalSupply > _maxAllowedSupply) {
+            revert IsOverSupplyCap({supply: newTotalSupply});
         }
         _totalSupply = newTotalSupply;
 
-        uint256 accountBalance = _balances[account];
-        _requireBalanceIsNotDenylisted(accountBalance, account);
-        accountBalance += amount;
-        _balances[account] = accountBalance;
+        unchecked {
+            // Overflow not possible: accountBalance + amount is at most totalSupply + amount, which is checked above.
+            _balances[account] = accountBalance + amount;
+        }
 
         emit Transfer(address(0), account, amount);
 
@@ -354,15 +363,17 @@ contract ERC20Upgradeable is
     function _burn(address account, uint256 amount) internal virtual {
         require(account != address(0), "ERC20: burn from the zero address");
 
-        _beforeTokenTransfer(account, address(0), amount);
-
         uint256 accountBalance = _balances[account];
         _requireBalanceIsNotDenylisted(accountBalance, account);
+
+        _beforeTokenTransfer(account, address(0), amount);
+
         require(accountBalance >= amount, "ERC20: burn amount exceeds balance");
         unchecked {
             _balances[account] = accountBalance - amount;
+            // Overflow not possible: amount <= accountBalance <= totalSupply.
+            _totalSupply -= amount;
         }
-        _totalSupply -= amount;
 
         emit Transfer(account, address(0), amount);
 
@@ -553,7 +564,7 @@ contract ERC20Upgradeable is
     function _denylist(address denylistee) internal virtual {
         uint256 userBalance = _balances[denylistee];
         _requireBalanceIsNotDenylisted(userBalance, denylistee);
-        _balances[denylistee] = userBalance | (uint256(1) << 255);
+        _balances[denylistee] = userBalance | _balanceDenyFlagSetMask;
         emit Denylist({denylister: _msgSender(), denylistee: denylistee});
     }
 
@@ -563,7 +574,7 @@ contract ERC20Upgradeable is
     function _undenylist(address denylistee) internal virtual {
         uint256 userBalance = _balances[denylistee];
         _requireBalanceIsDenylisted(userBalance, denylistee);
-        _balances[denylistee] = userBalance & ~(uint256(1) << 255);
+        _balances[denylistee] = userBalance & ~_balanceDenyFlagSetMask;
         emit Undenylist({denylister: _msgSender(), denylistee: denylistee});
     }
 
@@ -573,8 +584,8 @@ contract ERC20Upgradeable is
     function _destroyDenylistedFunds(address denylistee) internal virtual {
         uint256 userBalance = _balances[denylistee];
         _requireBalanceIsDenylisted(userBalance, denylistee);
-        uint256 denylistedFunds = userBalance & ~(uint256(1) << 255);
-        _balances[denylistee] = uint256(1) << 255;
+        uint256 denylistedFunds = userBalance & ~_balanceDenyFlagSetMask;
+        _balances[denylistee] = _balanceDenyFlagSetMask;
         _totalSupply -= denylistedFunds;
         emit DestroyDenylistedFunds({
             denylister: _msgSender(),
