@@ -51,8 +51,8 @@ contract ERC20Upgradeable is
     string private _name;
     string private _symbol;
 
-    uint256 private constant _balanceDenyFlagSetMask = uint256(1) << 255;
-    uint256 private constant _maxAllowedSupply = (uint256(1) << 255) - 1;
+    uint256 private constant BALANCE_DENY_FLAG_SET_MASK = uint256(1) << 255;
+    uint256 private constant MAX_ALLOWED_SUPPLY = (uint256(1) << 255) - 1;
 
     /**
      * @dev Sets the values for {name} and {symbol}.
@@ -127,7 +127,7 @@ contract ERC20Upgradeable is
         override
         returns (uint256)
     {
-        return _balances[account] & ~_balanceDenyFlagSetMask;
+        return _balances[account] & ~BALANCE_DENY_FLAG_SET_MASK;
     }
 
     /**
@@ -334,7 +334,7 @@ contract ERC20Upgradeable is
         _beforeTokenTransfer(address(0), account, amount);
 
         uint256 newTotalSupply = _totalSupply + amount;
-        if (newTotalSupply > _maxAllowedSupply) {
+        if (newTotalSupply > MAX_ALLOWED_SUPPLY) {
             revert IsOverSupplyCap({supply: newTotalSupply});
         }
         _totalSupply = newTotalSupply;
@@ -564,7 +564,7 @@ contract ERC20Upgradeable is
     function _denylist(address denylistee) internal virtual {
         uint256 userBalance = _balances[denylistee];
         _requireBalanceIsNotDenylisted(userBalance, denylistee);
-        _balances[denylistee] = userBalance | _balanceDenyFlagSetMask;
+        _balances[denylistee] = userBalance | BALANCE_DENY_FLAG_SET_MASK;
         emit Denylist({denylister: _msgSender(), denylistee: denylistee});
     }
 
@@ -574,7 +574,7 @@ contract ERC20Upgradeable is
     function _undenylist(address denylistee) internal virtual {
         uint256 userBalance = _balances[denylistee];
         _requireBalanceIsDenylisted(userBalance, denylistee);
-        _balances[denylistee] = userBalance & ~_balanceDenyFlagSetMask;
+        _balances[denylistee] = userBalance & ~BALANCE_DENY_FLAG_SET_MASK;
         emit Undenylist({denylister: _msgSender(), denylistee: denylistee});
     }
 
@@ -584,8 +584,8 @@ contract ERC20Upgradeable is
     function _destroyDenylistedFunds(address denylistee) internal virtual {
         uint256 userBalance = _balances[denylistee];
         _requireBalanceIsDenylisted(userBalance, denylistee);
-        uint256 denylistedFunds = userBalance & ~_balanceDenyFlagSetMask;
-        _balances[denylistee] = _balanceDenyFlagSetMask;
+        uint256 denylistedFunds = userBalance & ~BALANCE_DENY_FLAG_SET_MASK;
+        _balances[denylistee] = BALANCE_DENY_FLAG_SET_MASK;
         _totalSupply -= denylistedFunds;
         emit DestroyDenylistedFunds({
             denylister: _msgSender(),
