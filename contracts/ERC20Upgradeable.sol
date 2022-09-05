@@ -176,8 +176,6 @@ contract ERC20Upgradeable is
         public
         virtual
         override
-        whenNotDenylisted(_msgSender())
-        whenNotDenylisted(spender)
         returns (bool)
     {
         address owner = _msgSender();
@@ -227,8 +225,6 @@ contract ERC20Upgradeable is
     function increaseAllowance(address spender, uint256 addedValue)
         public
         virtual
-        whenNotDenylisted(_msgSender())
-        whenNotDenylisted(spender)
         returns (bool)
     {
         address owner = _msgSender();
@@ -253,8 +249,6 @@ contract ERC20Upgradeable is
     function decreaseAllowance(address spender, uint256 subtractedValue)
         public
         virtual
-        whenNotDenylisted(_msgSender())
-        whenNotDenylisted(spender)
         returns (bool)
     {
         address owner = _msgSender();
