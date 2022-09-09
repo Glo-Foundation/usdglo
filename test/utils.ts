@@ -22,7 +22,8 @@ export const MINTER_ROLE = getRoleKeccakFromRoleName(MINTER_ROLE_NAME);
 export const PAUSER_ROLE = getRoleKeccakFromRoleName(PAUSER_ROLE_NAME);
 export const DENYLISTER_ROLE = getRoleKeccakFromRoleName(DENYLISTER_ROLE_NAME);
 export const UPGRADER_ROLE = getRoleKeccakFromRoleName(UPGRADER_ROLE_NAME);
-export const DEFAULT_ADMIN_ROLE = 0x00;
+export const DEFAULT_ADMIN_ROLE =
+  "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 export async function readSlot(address: string, slot: any): Promise<string> {
   const value = await ethers.provider.getStorageAt(address, slot);
