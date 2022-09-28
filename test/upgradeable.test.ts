@@ -26,9 +26,9 @@ describe("upgradeable functionality of USDGLO", function () {
         user.address
       );
 
-      await expect(upgrades.upgradeProxy(usdglo, USDGLOV2)).to.be.revertedWith(
-        expectedRevertMessage
-      );
+      await expect(
+        upgrades.upgradeProxy(usdglo, USDGLOV2, { kind: "uups" })
+      ).to.be.revertedWith(expectedRevertMessage);
     });
 
     it("successful upgrade if called by address with UPGRADER_ROLE", async function () {
@@ -42,7 +42,7 @@ describe("upgradeable functionality of USDGLO", function () {
 
       await usdglo.connect(admin).grantRole(UPGRADER_ROLE, user.address);
 
-      await upgrades.upgradeProxy(usdglo, USDGLOV2);
+      await upgrades.upgradeProxy(usdglo, USDGLOV2, { kind: "uups" });
     });
   });
 });

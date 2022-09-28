@@ -57,7 +57,3 @@ export function parseString(hex: string): string {
 export function parseUInt(hex: string): BigNumber {
   return BigNumber.from(hex);
 }
-
-export function parseAddress(hex: string): string {
-  return utils.getAddress(hex);
-}
