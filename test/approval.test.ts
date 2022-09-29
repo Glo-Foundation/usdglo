@@ -4,7 +4,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { deployUSDGLOFixture } from "./fixtures";
 import { ethers } from "hardhat";
 
-import { MINTER_ROLE, PAUSER_ROLE, DENYLISTER_ROLE } from "./utils";
+import { MINTER_ROLE } from "./utils";
 
 describe("approve functionality of USDGLO", function () {
   describe("misc behaviour", function () {
