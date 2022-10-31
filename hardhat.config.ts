@@ -20,6 +20,16 @@ const config: HardhatUserConfig = {
     apiKey: process.env.DEFENDER_API_KEY as string,
     apiSecret: process.env.DEFENDER_API_SECRET as string,
   },
+  networks: {
+    mainnet: {
+      url: process.env.NETWORK_MAINNET_URL as string,
+    },
+  },
+  etherscan: {
+    apiKey: {
+      mainnet: process.env.ETHERSCAN_MAINNET_API_KEY as string,
+    },
+  },
 };
 
 export default config;
