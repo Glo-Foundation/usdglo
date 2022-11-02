@@ -9,7 +9,7 @@ import { DENYLISTER_ROLE, MINTER_ROLE } from "./utils";
 describe("generic ERC20 methods", function () {
   it("name must work", async function () {
     const { usdglo } = await loadFixture(deployUSDGLOFixture);
-    expect(await usdglo.name()).to.equal("USD Global Income Coin");
+    expect(await usdglo.name()).to.equal("Glo Dollar");
   });
 
   it("symbol must work", async function () {

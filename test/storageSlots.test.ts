@@ -210,7 +210,7 @@ describe("storage slots of USDGLO", function () {
       const { usdglo } = await loadFixture(deployUSDGLOFixture);
       const slot = 54;
       const slotValue = await readSlot(usdglo.address, slot);
-      expect(parseString(slotValue)).to.equal("USD Global Income Coin");
+      expect(parseString(slotValue)).to.equal("Glo Dollar");
     });
 
     it("_symbol", async function () {

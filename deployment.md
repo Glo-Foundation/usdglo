@@ -52,3 +52,13 @@ It requires the following env variables to be set (assuming mainnet):
 
 1. `ETHERSCAN_MAINNET_API_KEY`
 2. `NETWORK_MAINNET_URL`
+
+## Sign a message using a relayer
+
+`npx hardhat run scripts/signMessage.ts`
+
+It requires the following env variables to be set:
+
+1. `RELAYER_DEPLOYER_KEY`
+2. `RELAYER_DEPLOYER_SECRET`
+3. `MESSAGE_TO_SIGN`

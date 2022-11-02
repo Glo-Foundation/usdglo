@@ -2,6 +2,7 @@ image: node:16.16.0-alpine
 
 variables:
   NETWORK_MAINNET_URL: ""
+  NETWORK_POLYGON_URL: ""
 
 stages:
   - test
