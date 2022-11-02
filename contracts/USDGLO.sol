@@ -29,7 +29,7 @@ contract USDGlobalIncomeCoin is
     }
 
     function initialize(address admin) public initializer {
-        __ERC20_init("USD Global Income Coin", "USDGLO");
+        __ERC20_init("Glo Dollar", "USDGLO");
         __Pausable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();

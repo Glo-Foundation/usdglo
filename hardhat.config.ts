@@ -24,10 +24,14 @@ const config: HardhatUserConfig = {
     mainnet: {
       url: process.env.NETWORK_MAINNET_URL as string,
     },
+    polygon: {
+      url: process.env.NETWORK_POLYGON_URL as string,
+    },
   },
   etherscan: {
     apiKey: {
       mainnet: process.env.ETHERSCAN_MAINNET_API_KEY as string,
+      polygon: process.env.POLYGONSCAN_POLYGON_API_KEY as string,
     },
   },
 };
