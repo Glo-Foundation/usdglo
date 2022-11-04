@@ -27,11 +27,19 @@ const config: HardhatUserConfig = {
     polygon: {
       url: process.env.NETWORK_POLYGON_URL as string,
     },
+    goerli: {
+      url: process.env.NETWORK_GOERLI_URL as string,
+    },
+    polygonMumbai: {
+      url: process.env.NETWORK_MUMBAI_URL as string,
+    },
   },
   etherscan: {
     apiKey: {
       mainnet: process.env.ETHERSCAN_MAINNET_API_KEY as string,
       polygon: process.env.POLYGONSCAN_POLYGON_API_KEY as string,
+      goerli: process.env.ETHERSCAN_GOERLI_API_KEY as string,
+      polygonMumbai: process.env.POLYGONSCAN_MUMBAI_API_KEY as string,
     },
   },
 };
