@@ -1,5 +1,10 @@
 # usdglo
 
+USDGLO is deployed on:
+
+1. [Mainnet](https://etherscan.io/token/0x4F604735c1cF31399C6E711D5962b2B3E0225AD3)
+2. [Polygon](https://polygonscan.com/address/0x4F604735c1cF31399C6E711D5962b2B3E0225AD3)
+
 ## Tasks
 
 ### Install dependencies
