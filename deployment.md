@@ -62,3 +62,21 @@ It requires the following env variables to be set:
 1. `RELAYER_DEPLOYER_KEY`
 2. `RELAYER_DEPLOYER_SECRET`
 3. `MESSAGE_TO_SIGN`
+
+## Batch denylist addresses
+
+`npx hardhat run scripts/batchDenylist.ts --network networkName`
+
+Proposes a batch denylist transaction to the deployed USDGLO contract via OpenZeppelin Defender.
+
+It requires the following env variables to be set:
+
+1. `DEFENDER_API_KEY`
+2. `DEFENDER_API_SECRET`
+3. `PROXY_ADDRESS`
+4. `DENYLIST_FILE`
+5. `DENYLIST_TITLE`
+6. `DENYLIST_DESCRIPTION`
+7. `DENYLIST_MULTISIG`
+
+`DENYLIST_FILE` should be a path pointing to a csv file containing an address to be denylisted on every line.
