@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 import { deployUSDGLOFixture } from "./fixtures";
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 
 import { MINTER_ROLE, PAUSER_ROLE, DENYLISTER_ROLE } from "./utils";
 
@@ -107,6 +107,80 @@ describe("transfer functionality of USDGLO", function () {
       await expect(
         usdglo.connect(admin).transfer(user1.address, transferAmount)
       ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+    });
+
+    it("transfer works as expected when to and from address are the same", async function () {
+      const { admin, usdglo } = await loadFixture(deployUSDGLOFixture);
+      const [_, user1] = await ethers.getSigners();
+
+      const amount = 100_000;
+
+      await usdglo.connect(admin).grantRole(MINTER_ROLE, admin.address);
+      await usdglo.connect(admin).mint(user1.address, amount);
+
+      expect(await usdglo.balanceOf(user1.address)).to.equal(amount);
+
+      await usdglo.connect(user1).transfer(user1.address, amount);
+
+      expect(await usdglo.balanceOf(user1.address)).to.equal(amount);
+    });
+
+    it("transfer works as expected when to and from address are the same - 2", async function () {
+      const { admin, usdglo } = await loadFixture(deployUSDGLOFixture);
+      const [_, user1] = await ethers.getSigners();
+
+      const amount = 100_000;
+
+      await usdglo.connect(admin).grantRole(MINTER_ROLE, admin.address);
+      await usdglo.connect(admin).mint(user1.address, amount);
+
+      expect(await usdglo.balanceOf(user1.address)).to.equal(amount);
+
+      await usdglo
+        .connect(user1)
+        .transfer(user1.address, await usdglo.balanceOf(user1.address));
+      await usdglo
+        .connect(user1)
+        .transfer(user1.address, await usdglo.balanceOf(user1.address));
+      await usdglo
+        .connect(user1)
+        .transfer(user1.address, await usdglo.balanceOf(user1.address));
+      await usdglo.connect(user1).transfer(user1.address, 500);
+
+      expect(await usdglo.balanceOf(user1.address)).to.equal(amount);
+    });
+
+    it("v1 - transfer does not work as expected when to and from address are the same", async function () {
+      const [admin, user1] = await ethers.getSigners();
+      const USDGLO_V1 = await ethers.getContractFactory(
+        "USDGlobalIncomeCoin",
+        admin
+      );
+
+      const usdgloV1 = await upgrades.deployProxy(USDGLO_V1, [admin.address], {
+        kind: "uups",
+      });
+      await usdgloV1.deployed();
+
+      const amount = 100_000;
+
+      await usdgloV1.connect(admin).grantRole(MINTER_ROLE, admin.address);
+      await usdgloV1.connect(admin).mint(user1.address, amount);
+
+      expect(await usdgloV1.balanceOf(user1.address)).to.equal(amount);
+
+      await usdgloV1
+        .connect(user1)
+        .transfer(user1.address, await usdgloV1.balanceOf(user1.address));
+      await usdgloV1
+        .connect(user1)
+        .transfer(user1.address, await usdgloV1.balanceOf(user1.address));
+      await usdgloV1
+        .connect(user1)
+        .transfer(user1.address, await usdgloV1.balanceOf(user1.address));
+      await usdgloV1.connect(user1).transfer(user1.address, 500);
+
+      expect(await usdgloV1.balanceOf(user1.address)).to.equal(800_500);
     });
   });
 });
@@ -244,6 +318,113 @@ describe("transferFrom functionality of USDGLO", function () {
           .connect(user3)
           .transferFrom(user1.address, user2.address, mintAmount)
       ).to.be.revertedWith("ERC20: insufficient allowance");
+    });
+
+    it("transferFrom works as expected when to and from address are the same", async function () {
+      const { admin, usdglo } = await loadFixture(deployUSDGLOFixture);
+      const [_, user1] = await ethers.getSigners();
+
+      const amount = 100_000;
+
+      await usdglo.connect(admin).grantRole(MINTER_ROLE, admin.address);
+      await usdglo.connect(admin).mint(user1.address, amount);
+
+      expect(await usdglo.balanceOf(user1.address)).to.equal(amount);
+
+      await usdglo.connect(user1).approve(user1.address, amount);
+      await usdglo
+        .connect(user1)
+        .transferFrom(user1.address, user1.address, amount);
+
+      expect(await usdglo.balanceOf(user1.address)).to.equal(amount);
+    });
+
+    it("transferFrom works as expected when to and from address are the same - 2", async function () {
+      const { admin, usdglo } = await loadFixture(deployUSDGLOFixture);
+      const [_, user1] = await ethers.getSigners();
+
+      const amount = 100_000;
+
+      await usdglo.connect(admin).grantRole(MINTER_ROLE, admin.address);
+      await usdglo.connect(admin).mint(user1.address, amount);
+
+      expect(await usdglo.balanceOf(user1.address)).to.equal(amount);
+
+      await usdglo.connect(user1).approve(user1.address, amount * 10);
+      await usdglo
+        .connect(user1)
+        .transferFrom(
+          user1.address,
+          user1.address,
+          await usdglo.balanceOf(user1.address)
+        );
+      await usdglo
+        .connect(user1)
+        .transferFrom(
+          user1.address,
+          user1.address,
+          await usdglo.balanceOf(user1.address)
+        );
+      await usdglo
+        .connect(user1)
+        .transferFrom(
+          user1.address,
+          user1.address,
+          await usdglo.balanceOf(user1.address)
+        );
+      await usdglo
+        .connect(user1)
+        .transferFrom(user1.address, user1.address, 500);
+
+      expect(await usdglo.balanceOf(user1.address)).to.equal(amount);
+    });
+
+    it("v1 - transferFrom does not work as expected when to and from address are the same", async function () {
+      const [admin, user1] = await ethers.getSigners();
+      const USDGLO_V1 = await ethers.getContractFactory(
+        "USDGlobalIncomeCoin",
+        admin
+      );
+
+      const usdgloV1 = await upgrades.deployProxy(USDGLO_V1, [admin.address], {
+        kind: "uups",
+      });
+      await usdgloV1.deployed();
+
+      const amount = 100_000;
+
+      await usdgloV1.connect(admin).grantRole(MINTER_ROLE, admin.address);
+      await usdgloV1.connect(admin).mint(user1.address, amount);
+
+      expect(await usdgloV1.balanceOf(user1.address)).to.equal(amount);
+
+      await usdgloV1.connect(user1).approve(user1.address, amount * 10);
+      await usdgloV1
+        .connect(user1)
+        .transferFrom(
+          user1.address,
+          user1.address,
+          await usdgloV1.balanceOf(user1.address)
+        );
+      await usdgloV1
+        .connect(user1)
+        .transferFrom(
+          user1.address,
+          user1.address,
+          await usdgloV1.balanceOf(user1.address)
+        );
+      await usdgloV1
+        .connect(user1)
+        .transferFrom(
+          user1.address,
+          user1.address,
+          await usdgloV1.balanceOf(user1.address)
+        );
+      await usdgloV1
+        .connect(user1)
+        .transferFrom(user1.address, user1.address, 500);
+
+      expect(await usdgloV1.balanceOf(user1.address)).to.equal(800_500);
     });
   });
 });
