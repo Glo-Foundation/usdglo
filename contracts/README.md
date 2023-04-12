@@ -2,6 +2,8 @@
 
 # A stablecoin that generates basic income.
 
+**Note:** v1 of the contracts had a bug in the `_transfer` function which required an upgrade to v2. Please find the current contracts [here](v2)
+
 ## Distinctions from a standard ERC20 token
 
 USDGLO has two major differences compared to a standard ERC20 token:
