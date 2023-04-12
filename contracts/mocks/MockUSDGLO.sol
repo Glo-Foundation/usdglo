@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.7;
 
-import "../USDGLO.sol";
+import "../v1/USDGLO.sol";
 
 contract MockUSDGlobalIncomeCoin is USDGlobalIncomeCoin {
     address mockedOwner;
