@@ -1,0 +1,75 @@
+# Debug, for historical/reaserach/debuging purposes
+FROM ghcr.io/foundry-rs/foundry
+
+# 4 step - build, kill, run & connect
+# docker build . -f Dockerfile.debug --progress=plain -t usdglo
+# docker stop $(docker ps | cut -c 1-12 | tail -1)
+# docker run -d --env-file .env usdglo
+# docker exec -it $(docker ps | cut -c 1-12 | tail -1) /bin/sh
+
+WORKDIR /app
+
+COPY . .
+
+# RUN apk update && apk add bash curl git
+
+RUN apk update && apk add --no-cache wget
+RUN apk add --update nodejs=16.20.0-r0 npm
+
+# RUN apk add -U curl bash ca-certificates openssl ncurses coreutils python make gcc g++ libgcc linux-headers grep util-linux binutils findutils
+
+# RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+
+# RUN export NVM_DIR="$HOME/.nvm"
+
+# RUN [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+# RUN nvm install -s <version>
+
+# RUN wget https://nodejs.org/dist/v16.17.0/node-v16.17.0-linux-x64.tar.xz && tar -xf node-v16.17.0-linux-x64.tar.xz
+# ENV PATH="$PATH:/app/node-v16.17.0-linux-x64/bin"
+# RUN echo $PATH
+# RUN ls /app/node-v16.17.0-linux-x64/bin/npm
+# RUN /app/node-v16.17.0-linux-x64/bin/npm -v
+
+# RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - && apt add nodejs build-essential
+RUN node -v
+RUN npm -v
+RUN npm i
+
+# USER node
+
+# RUN foundryup
+
+# RUN curl -L https://foundry.paradigm.xyz | bash
+# RUN . /root/.profile
+# RUN source /root/.profile
+# RUN . /home/node/.foundry/bin/foundryup
+RUN npx hardhat test
+RUN forge test
+
+CMD [ "tail",  "-f", "/dev/null" ]
+
+
+# // 
+
+# FROM node:16.17-bullseye
+
+# WORKDIR /app
+
+# COPY . .
+
+
+# RUN npm install
+# # RUN apk update && apk add bash curl git
+
+# USER node
+
+
+# RUN curl -L https://foundry.paradigm.xyz | bash
+# # RUN . /root/.profile
+# RUN bash /home/node/.bashrc
+# RUN foundryup
+# # RUN npx hardhat test
+
+# CMD [ "tail",  "-f", "/dev/null" ]
