@@ -10,3 +10,7 @@ cache
 artifacts
 
 .openzeppelin/unknown-*.json
+
+# Foundry files
+out
+cache_forge
