@@ -1,6 +1,6 @@
 # USDGLO Design document
 
-# A stablecoin that generates basic income.
+# A stablecoin that generates basic income.
 
 **Note:** v1 of the contracts had a bug in the `_transfer` function which required an upgrade to v2. Please find the current contracts [here](v2)
 
@@ -20,7 +20,7 @@ USDGLO has two major differences compared to a standard ERC20 token:
 
 ## Roles
 
-1. `DEFAULT_ADMIN_ROLE` → Special role which acts as the default admin role for all roles. An account with this role will be able to manage any other role. This role will be by default assigned to the contract deployer address.
+1. `DEFAULT_ADMIN_ROLE` → Special role which acts as the default admin role for all roles. An account with this role will be able to manage any other role. This role will be set by an argument in the `initialize` method.
 2. `PAUSER_ROLE` → Only this role will be allowed to pause/unpause the USDGLO contract. Pausing stops all minting, burning and transfers.
 3. `MINTER_ROLE` → Only this role will be allowed to mint USDGLO and burn USDGLO.
 4. `DENYLISTER_ROLE` → Only this role will be allowed to add or remove addresses to a denylist. An address which is added to the denylist cannot be part of any minting, burning or transfer of USDGLO.
@@ -62,16 +62,17 @@ Minting is the process of generating new USDGLO and adding them to the supply.
 
 1. Minting will not work if the contract is paused.
 2. Only addresses with `MINTER_ROLE` can mint USDGLO.
-3. Minting will fail if `to` is denylisted.
-4. Minting will fail if minter is denylisted.
+3. Minting will fail if minter is denylisted.
+4. Minting will fail if `to` is denylisted.
 5. Minting will emit a `Transfer(address(0), to, amount)` event.
 6. Minting will emit a `Mint(minter, to, amount)` event.
 
 **Implementation notes:**
 
 1. Regarding point 1: Minting involves calling the `_beforeTokenTransfer` method which checks for `whenNotPaused`.
-2. Regarding point 2: `mint` method will have a `onlyRole(MINTER_ROLE)` check.
-3. Regarding points 3 and 4: The internal `_mint` method checks `_requireBalanceIsNotDenylisted` on both the minters balance and the `to` address balance.
+2. Regarding point 2: `mint` method has a `onlyRole(MINTER_ROLE)` check.
+3. Regarding points 3: The `mint` method has a `whenNotDenylisted` modifier check on `_msgSender()`.
+4. Regarding points 4: The internal `_mint` method checks `_requireBalanceIsNotDenylisted` on the `to` address balance.
 
 ## Burning
 
@@ -93,7 +94,7 @@ Burning is the process of destroying existing USDGLO and removing them from the 
 **Implementation notes:**
 
 1. Regarding point 1: Burning involves calling the `_beforeTokenTransfer` method which checks for `whenNotPaused`.
-2. Regarding point 3: `burn` method only allows one to burn their own token. As the method will have a `onlyRole(MINTER_ROLE)` check, point 3 is satisfied.
+2. Regarding point 3: `burn` method only allows one to burn their own token. As the method has a `onlyRole(MINTER_ROLE)` check, point 3 is satisfied.
 3. Regarding point 4: The internal `_burn` method checks `_requireBalanceIsNotDenylisted` on the minters balance.
 
 ## Upgrading
@@ -113,7 +114,7 @@ USDGLO uses the UUPS Transparent Proxy pattern to upgrade itself.
 1. `transfer(address to, uint256 amount)`
 2. `transferFrom(address from, address to, uint256 amount)`
 
-P**oints:**
+**Points:**
 
 1. Transfers will revert if the contract is paused.
 2. Transfers will revert if any of the addresses involved are denylisted.
@@ -188,30 +189,30 @@ Please use the `Using balance high bit` sheet and not the `Using boolean map` sh
 | balanceOf()                                            | public     |                  |                                       |
 | transfer(address to, uint256 amount)                   | public     | ✅               | ✅                                    |
 | allowance(address owner, address spender)              | public     |                  |                                       |
-| approve(address spender, uint256 amount)               | public     | ✅               | ✅                                    |
+| approve(address spender, uint256 amount)               | public     |                  |                                       |
 | transferFrom(address from, address to, uint256 amount) | public     | ✅               | ✅                                    |
 
 ## Non ERC20 methods
 
-| Method                                                         | Visibility | Revert if paused | Revert if address involved denylisted         |
-| -------------------------------------------------------------- | ---------- | ---------------- | --------------------------------------------- |
-| increaseAllowance(address spender, uint256 addedValue)         | public     | ✅               | ✅                                            |
-| decreaseAllowance(address spender, uint256 subtractedValue)    | public     | ✅               | ✅                                            |
-| paused()                                                       | public     |                  |                                               |
-| isDenylisted(address denylistee)                               | public     |                  |                                               |
-| supportsInterface(bytes4 interfaceId)                          | public     |                  |                                               |
-| hasRole(bytes32 role, address account)                         | public     |                  |                                               |
-| getRoleAdmin(bytes32 role)                                     | public     |                  |                                               |
-| grantRole(bytes32 role, address account)                       | public     |                  |                                               |
-| revokeRole(bytes32 role, address account)                      | public     |                  |                                               |
-| renounceRole(bytes32 role, address account)                    | public     |                  |                                               |
-| proxiableUUID()                                                | external   |                  |                                               |
-| upgradeTo(address newImplementation)                           | external   |                  |                                               |
-| upgradeToAndCall(address newImplementation, bytes memory data) | external   |                  |                                               |
-| pause()                                                        | external   | ✅               |                                               |
-| unpause()                                                      | external   |                  |                                               |
-| denylist(address denylistee)                                   | external   |                  | ✅ (only if denylistee is already denylisted) |
-| undenylist(address denylistee)                                 | external   |                  |                                               |
-| mint(address to, uint256 amount)                               | external   | ✅               | ✅                                            |
-| burn(uint256 amount)                                           | external   | ✅               | ✅                                            |
-| destroyDenylistedFunds(address denylistee)                     | external   |                  | Will revert if denylistee isn’t denylisted    |
+| Method                                                         | Visibility | Revert if paused | Revert if address involved denylisted             |
+| -------------------------------------------------------------- | ---------- | ---------------- | ------------------------------------------------- |
+| increaseAllowance(address spender, uint256 addedValue)         | public     |                  |                                                   |
+| decreaseAllowance(address spender, uint256 subtractedValue)    | public     |                  |                                                   |
+| paused()                                                       | public     |                  |                                                   |
+| isDenylisted(address denylistee)                               | public     |                  |                                                   |
+| supportsInterface(bytes4 interfaceId)                          | public     |                  |                                                   |
+| hasRole(bytes32 role, address account)                         | public     |                  |                                                   |
+| getRoleAdmin(bytes32 role)                                     | public     |                  |                                                   |
+| grantRole(bytes32 role, address account)                       | public     |                  |                                                   |
+| revokeRole(bytes32 role, address account)                      | public     |                  |                                                   |
+| renounceRole(bytes32 role, address account)                    | public     |                  |                                                   |
+| proxiableUUID()                                                | external   |                  |                                                   |
+| upgradeTo(address newImplementation)                           | external   |                  |                                                   |
+| upgradeToAndCall(address newImplementation, bytes memory data) | external   |                  |                                                   |
+| pause()                                                        | external   | ✅               |                                                   |
+| unpause()                                                      | external   |                  |                                                   |
+| denylist(address denylistee)                                   | external   |                  | ✅ (only if denylistee is already denylisted)     |
+| undenylist(address denylistee)                                 | external   |                  | ✅ (only if denylistee is already not denylisted) |
+| mint(address to, uint256 amount)                               | external   | ✅               | ✅                                                |
+| burn(uint256 amount)                                           | external   | ✅               | ✅                                                |
+| destroyDenylistedFunds(address denylistee)                     | external   |                  | ✅ (only if denylistee isn’t denylisted)          |
