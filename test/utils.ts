@@ -1,5 +1,8 @@
-import { utils, BigNumber } from "ethers";
+import { utils, BigNumber, Contract, Signer } from "ethers";
 import { ethers } from "hardhat";
+import { BigNumberish, constants, Signature } from "ethers";
+import { splitSignature } from "ethers/lib/utils";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 
 function getRoleKeccakFromRoleName(roleName: string) {
   return utils.keccak256(utils.toUtf8Bytes(roleName));
@@ -56,4 +59,67 @@ export function parseString(hex: string): string {
 
 export function parseUInt(hex: string): BigNumber {
   return BigNumber.from(hex);
+}
+
+export async function getPermitSignature(
+  signer: SignerWithAddress,
+  token: Contract,
+  spender: string,
+  value: BigNumberish | bigint = constants.MaxUint256,
+  deadline = constants.MaxUint256,
+  permitConfig?: {
+    nonce?: BigNumberish;
+    name?: string;
+    chainId?: number;
+    version?: string;
+  }
+): Promise<Signature> {
+  const [nonce, name, version, chainId] = await Promise.all([
+    permitConfig?.nonce ?? token.nonces(signer.address),
+    permitConfig?.name ?? token.name(),
+    permitConfig?.version ?? "1",
+    permitConfig?.chainId ?? signer.getChainId(),
+  ]);
+
+  return splitSignature(
+    await signer._signTypedData(
+      {
+        name,
+        version,
+        chainId,
+        verifyingContract: token.address,
+      },
+      {
+        Permit: [
+          {
+            name: "owner",
+            type: "address",
+          },
+          {
+            name: "spender",
+            type: "address",
+          },
+          {
+            name: "value",
+            type: "uint256",
+          },
+          {
+            name: "nonce",
+            type: "uint256",
+          },
+          {
+            name: "deadline",
+            type: "uint256",
+          },
+        ],
+      },
+      {
+        owner: signer.address,
+        spender,
+        value,
+        nonce,
+        deadline,
+      }
+    )
+  );
 }

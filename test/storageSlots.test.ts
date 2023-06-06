@@ -1,7 +1,10 @@
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
-import { deployUSDGLOFixture } from "./fixtures";
+import {
+  deployUSDGLOFixture,
+  deployUSDGLOFixtureWithVersion,
+} from "./fixtures";
 import { ethers } from "hardhat";
 import {
   readSlot,
@@ -12,7 +15,9 @@ import {
   PAUSER_ROLE,
   DENYLISTER_ROLE,
   MINTER_ROLE,
+  getPermitSignature,
 } from "./utils";
+import { BigNumber, utils } from "ethers";
 
 function checkEmptySlots() {
   it("empty gap from ContextUpgradeable", async function () {
@@ -96,12 +101,20 @@ describe("storage slots of USDGLO", function () {
   describe("storage slots with unused bits ", checkUnusedSlots);
 
   describe("storage slots of values that can change", function () {
-    it("_initialized from Initializable is true", async function () {
-      const { usdglo } = await loadFixture(deployUSDGLOFixture);
+    it("_initialized from Initializable is 1 for V2", async function () {
+      const { usdglo } = await loadFixture(deployUSDGLOFixtureWithVersion(2));
       const slot = 0;
       const slotValue = await readSlot(usdglo.address, slot);
       const byte32Hex = ethers.utils.hexDataSlice(slotValue, 31, 32);
       expect(parseUInt(byte32Hex)).to.equal(1);
+    });
+
+    it("_initialized from Initializable is 2 for V3", async function () {
+      const { usdglo } = await loadFixture(deployUSDGLOFixture);
+      const slot = 0;
+      const slotValue = await readSlot(usdglo.address, slot);
+      const byte32Hex = ethers.utils.hexDataSlice(slotValue, 31, 32);
+      expect(parseUInt(byte32Hex)).to.equal(2);
     });
 
     it("_initializing from Initializable is false", async function () {
@@ -267,6 +280,194 @@ describe("storage slots of USDGLO", function () {
         getNestedMappingSlot(usdglo.address, slot, MINTER_ROLE, user.address)
       );
       expect(parseUInt(slotValue)).to.equal(0);
+    });
+
+    it("_HASHED_NAME", async function () {
+      const { usdglo } = await loadFixture(deployUSDGLOFixture);
+      const slot = 351;
+
+      const slotValue = await readSlot(usdglo.address, slot);
+      expect(parseUInt(slotValue)).to.equal(
+        utils.keccak256(utils.toUtf8Bytes("Glo Dollar"))
+      );
+    });
+
+    it("_HASHED_VERSION", async function () {
+      const { usdglo } = await loadFixture(deployUSDGLOFixture);
+      const slot = 352;
+
+      const slotValue = await readSlot(usdglo.address, slot);
+      expect(parseUInt(slotValue)).to.equal(
+        utils.keccak256(utils.toUtf8Bytes("1"))
+      );
+    });
+
+    it("_nonces mapping", async function () {
+      const { usdglo } = await loadFixture(deployUSDGLOFixture);
+      const [_, user1, user2, user3] = await ethers.getSigners();
+      const slot = 403;
+
+      let slotValue = await readSlot(usdglo.address, slot);
+      expect(parseUInt(slotValue)).to.equal(0);
+
+      slotValue = await readSlot(
+        usdglo.address,
+        getMappingSlot(usdglo.address, slot, user1.address)
+      );
+      expect(parseUInt(slotValue)).to.equal(0);
+
+      const {
+        v: user1Permit1V,
+        r: user1Permit1R,
+        s: user1Permit1S,
+      } = await getPermitSignature(
+        user1,
+        usdglo,
+        user2.address,
+        100_000,
+        ethers.constants.MaxInt256
+      );
+      await usdglo.permit(
+        user1.address,
+        user2.address,
+        100_000,
+        ethers.constants.MaxInt256,
+        user1Permit1V,
+        user1Permit1R,
+        user1Permit1S
+      );
+
+      slotValue = await readSlot(
+        usdglo.address,
+        getMappingSlot(usdglo.address, slot, user1.address)
+      );
+      expect(parseUInt(slotValue)).to.equal(1);
+
+      const customDeadline = BigNumber.from(
+        (
+          await usdglo.signer?.provider?.getBlock(
+            await usdglo.signer?.provider?.getBlockNumber()
+          )
+        )?.timestamp
+      ).add(31536000);
+
+      const {
+        v: user1Permit2V,
+        r: user1Permit2R,
+        s: user1Permit2S,
+      } = await getPermitSignature(
+        user1,
+        usdglo,
+        user2.address,
+        200_000,
+        customDeadline
+      );
+      await usdglo.permit(
+        user1.address,
+        user2.address,
+        200_000,
+        customDeadline,
+        user1Permit2V,
+        user1Permit2R,
+        user1Permit2S
+      );
+
+      slotValue = await readSlot(
+        usdglo.address,
+        getMappingSlot(usdglo.address, slot, user1.address)
+      );
+      expect(parseUInt(slotValue)).to.equal(2);
+
+      slotValue = await readSlot(
+        usdglo.address,
+        getMappingSlot(usdglo.address, slot, user2.address)
+      );
+      expect(parseUInt(slotValue)).to.equal(0);
+
+      const {
+        v: user2Permit1V,
+        r: user2Permit1R,
+        s: user2Permit1S,
+      } = await getPermitSignature(
+        user2,
+        usdglo,
+        user1.address,
+        1,
+        ethers.constants.MaxInt256
+      );
+      await usdglo.permit(
+        user2.address,
+        user1.address,
+        1,
+        ethers.constants.MaxInt256,
+        user2Permit1V,
+        user2Permit1R,
+        user2Permit1S
+      );
+
+      slotValue = await readSlot(
+        usdglo.address,
+        getMappingSlot(usdglo.address, slot, user2.address)
+      );
+      expect(parseUInt(slotValue)).to.equal(1);
+
+      const {
+        v: user1Permit3V,
+        r: user1Permit3R,
+        s: user1Permit3S,
+      } = await getPermitSignature(
+        user1,
+        usdglo,
+        user3.address,
+        0,
+        ethers.constants.MaxInt256
+      );
+      await usdglo.permit(
+        user1.address,
+        user3.address,
+        0,
+        ethers.constants.MaxInt256,
+        user1Permit3V,
+        user1Permit3R,
+        user1Permit3S
+      );
+
+      slotValue = await readSlot(
+        usdglo.address,
+        getMappingSlot(usdglo.address, slot, user1.address)
+      );
+      expect(parseUInt(slotValue)).to.equal(3);
+
+      slotValue = await readSlot(
+        usdglo.address,
+        getMappingSlot(usdglo.address, slot, user2.address)
+      );
+      expect(parseUInt(slotValue)).to.equal(1);
+
+      slotValue = await readSlot(
+        usdglo.address,
+        getMappingSlot(usdglo.address, slot, user3.address)
+      );
+      expect(parseUInt(slotValue)).to.equal(0);
+    });
+
+    it("_PERMIT_TYPEHASH_DEPRECATED_SLOT", async function () {
+      const { usdglo } = await loadFixture(deployUSDGLOFixture);
+      const slot = 404;
+
+      const slotValue = await readSlot(usdglo.address, slot);
+      expect(parseUInt(slotValue)).to.equal(0);
+    });
+
+    it("Implementation slot", async function () {
+      const { usdglo, v3Implementation } = await loadFixture(
+        deployUSDGLOFixture
+      );
+      const slot =
+        24440054405305269366569402256811496959409073762505157381672968839269610695612n;
+
+      const slotValue = await readSlot(usdglo.address, slot);
+      expect(parseUInt(slotValue)).to.equal(v3Implementation);
     });
   });
 });
