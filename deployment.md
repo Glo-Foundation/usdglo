@@ -32,6 +32,26 @@ It requires the following env variables to be set (assuming mainnet):
 7. `UPGRADE_MULTISIG`
 8. `NETWORK_MAINNET_URL`
 
+## prepareUpgrade.ts
+
+`npx hardhat run scripts/prepareUpgrade.ts --network networkName`
+
+Prepares an upgrade to the deployed USDGLO contract via OpenZeppelin Defender.
+
+Unlike `proposeUpgrade`, `prepareUpgrade` only checks if the new implementation contract is a valid upgrade, deploys the new implementation contract and finally returns the address.
+
+You will have to manually go to OpenZeppelin Defender and create and execute a new proposal calling either `upgradeTo` or `upgradeToAndCall` on the proxy to actually upgrade the contract.
+
+It requires the following env variables to be set (assuming mainnet):
+
+1. `DEFENDER_API_KEY`
+2. `DEFENDER_API_SECRET`
+3. `RELAYER_DEPLOYER_KEY`
+4. `RELAYER_DEPLOYER_SECRET`
+5. `UPGRADE_CONTRACT_NAME`
+6. `PROXY_ADDRESS`
+7. `NETWORK_MAINNET_URL`
+
 ## forceImport.ts
 
 `npx hardhat run scripts/forceImport.ts --network networkName`

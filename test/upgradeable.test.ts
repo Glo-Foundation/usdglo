@@ -14,11 +14,19 @@ import {
 describe("upgradeable functionality of USDGLO", function () {
   describe("role behaviour", function () {
     it("reverts upgrade if called by address without UPGRADER_ROLE", async function () {
-      const { usdglo } = await loadFixture(deployUSDGLOFixture);
-      const [_, user] = await ethers.getSigners();
+      const [admin, user] = await ethers.getSigners();
+      const USDGLO_V1 = await ethers.getContractFactory(
+        "USDGlobalIncomeCoin",
+        admin
+      );
+
+      const usdgloV1 = await upgrades.deployProxy(USDGLO_V1, [admin.address], {
+        kind: "uups",
+      });
+      await usdgloV1.deployed();
 
       const USDGLOV2 = await ethers.getContractFactory(
-        "USDGlobalIncomeCoin",
+        "USDGlobalIncomeCoinV2",
         user
       );
 
@@ -28,22 +36,40 @@ describe("upgradeable functionality of USDGLO", function () {
       );
 
       await expect(
-        upgrades.upgradeProxy(usdglo, USDGLOV2, { kind: "uups" })
+        upgrades.upgradeProxy(usdgloV1, USDGLOV2, { kind: "uups" })
       ).to.be.revertedWith(expectedRevertMessage);
     });
 
     it("successful upgrade if called by address with UPGRADER_ROLE", async function () {
-      const { usdglo, admin } = await loadFixture(deployUSDGLOFixture);
-      const [_, user] = await ethers.getSigners();
-
-      const USDGLOV2 = await ethers.getContractFactory(
+      const [admin, user] = await ethers.getSigners();
+      const USDGLO_V1 = await ethers.getContractFactory(
         "USDGlobalIncomeCoin",
-        user
+        admin
       );
 
-      await usdglo.connect(admin).grantRole(UPGRADER_ROLE, user.address);
+      const usdgloV1 = await upgrades.deployProxy(USDGLO_V1, [admin.address], {
+        kind: "uups",
+      });
+      await usdgloV1.deployed();
 
-      await upgrades.upgradeProxy(usdglo, USDGLOV2, { kind: "uups" });
+      const USDGLOV2 = await ethers.getContractFactory(
+        "USDGlobalIncomeCoinV2",
+        user
+      );
+      const USDGLOV3 = await ethers.getContractFactory("GloDollarV3", user);
+
+      await usdgloV1.connect(admin).grantRole(UPGRADER_ROLE, user.address);
+
+      const usdgloV2 = await upgrades.upgradeProxy(usdgloV1, USDGLOV2, {
+        kind: "uups",
+      });
+      await upgrades.upgradeProxy(usdgloV2, USDGLOV3, {
+        kind: "uups",
+        call: {
+          fn: "initializeV3",
+          args: [],
+        },
+      });
     });
 
     it("successful upgrade if called by address with UPGRADER_ROLE - 2", async function () {
@@ -69,14 +95,22 @@ describe("upgradeable functionality of USDGLO", function () {
         "USDGlobalIncomeCoinV2",
         admin
       );
+      const USDGLOV3 = await ethers.getContractFactory("GloDollarV3", admin);
 
       const usdgloV2 = await upgrades.upgradeProxy(usdgloV1.address, USDGLOV2, {
         kind: "uups",
       });
+      const usdgloV3 = await upgrades.upgradeProxy(usdgloV2, USDGLOV3, {
+        kind: "uups",
+        call: {
+          fn: "initializeV3",
+          args: [],
+        },
+      });
 
-      expect(await usdgloV2.paused()).to.be.true;
-      await usdgloV2.connect(admin).unpause();
-      expect(await usdgloV2.paused()).to.be.false;
+      expect(await usdgloV3.paused()).to.be.true;
+      await usdgloV3.connect(admin).unpause();
+      expect(await usdgloV3.paused()).to.be.false;
     });
   });
 });

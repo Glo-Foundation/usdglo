@@ -24,4 +24,4 @@ test:
     # - source /root/.profile
     # - foundryup
     - npx hardhat test
-    - forge test
+    - forge test --no-match-contract USDGLO_Fork_Test

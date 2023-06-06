@@ -1,35 +1,34 @@
 pragma solidity 0.8.7;
 
 import "forge-std/Test.sol";
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import "../../contracts/v2/USDGLO_V2.sol";
+import "../../contracts/v3/USDGLO_V3.sol";
+import "./Helper.sol";
 
-contract UUPSProxy is ERC1967Proxy {
-    constructor(address _implementation, bytes memory _data)
-        ERC1967Proxy(_implementation, _data)
-    {}
-}
-
-contract ERC20Test is Test {
-    USDGlobalIncomeCoinV2 private usdglo;
+contract USDGLO_Test is Test {
+    GloDollarV3 private usdglo;
 
     address private constant admin = address(1);
     address private constant minter = address(2);
+    address private constant denylister = address(3);
+    address private constant pauser = address(4);
 
     uint256 private constant MAX_ALLOWED_SUPPLY = (uint256(1) << 255) - 1;
 
     function setUp() public {
-        USDGlobalIncomeCoinV2 implementationV1 = new USDGlobalIncomeCoinV2();
-        UUPSProxy proxy = new UUPSProxy(address(implementationV1), "");
+        GloDollarV3 implementation = new GloDollarV3();
+        UUPSProxy proxy = new UUPSProxy(address(implementation), "");
 
         // wrap in ABI to support easier calls
-        usdglo = USDGlobalIncomeCoinV2(address(proxy));
+        usdglo = GloDollarV3(address(proxy));
 
         usdglo.initialize(admin);
+        usdglo.initializeV3();
 
         vm.startPrank(admin);
 
         usdglo.grantRole(usdglo.MINTER_ROLE(), minter);
+        usdglo.grantRole(usdglo.DENYLISTER_ROLE(), denylister);
+        usdglo.grantRole(usdglo.PAUSER_ROLE(), pauser);
 
         vm.stopPrank();
     }
@@ -258,5 +257,151 @@ contract ERC20Test is Test {
 
         vm.expectRevert(bytes("ERC20: transfer amount exceeds balance"));
         usdglo.transferFrom(from, to, sendAmount);
+    }
+
+    function testDenyListInverse(uint256 x) public {
+        // set up our mask
+        uint256 testMask = uint256(1) << 255;
+
+        // assume our initial balance never surpasses the max allowed supply
+        x = bound(x, 0, MAX_ALLOWED_SUPPLY);
+
+        // test if the denylist correctly undoes itself
+        uint256 y = x | testMask;
+        uint256 z = y & ~testMask;
+        assertEq(x, z);
+    }
+
+    function testDoubleDenyList(uint256 mintAmount1) public {
+        mintAmount1 = bound(mintAmount1, 0, MAX_ALLOWED_SUPPLY);
+        uint256 mintAmount2 = MAX_ALLOWED_SUPPLY - mintAmount1;
+
+        // giving address(100) address(200) their mintAmounts
+        vm.startPrank(minter);
+        usdglo.mint(address(100), mintAmount1);
+        usdglo.mint(address(200), mintAmount2);
+        vm.stopPrank();
+
+        // denylisting address(100) and destorying their funds
+        vm.startPrank(denylister);
+        usdglo.denylist(address(100));
+        usdglo.destroyDenylistedFunds(address(100));
+
+        // expect all of the supply to be with address(200)
+        assertEq(usdglo.balanceOf(address(200)), usdglo.totalSupply());
+        assertEq(usdglo.balanceOf(address(200)), mintAmount2);
+
+        // attempt a double denylist (it should revert)
+        vm.expectRevert(abi.encodeWithSelector(IsDenylisted.selector, 0x64));
+        usdglo.denylist(address(100));
+
+        // undenylist before redenying address(100)
+        usdglo.undenylist(address(100));
+        usdglo.denylist(address(100));
+
+        // expect 0 usdglo
+        assertEq(usdglo.balanceOf(address(100)), 0);
+
+        // see if this impacts supply at all
+        usdglo.destroyDenylistedFunds(address(100));
+        assertEq(usdglo.balanceOf(address(200)), usdglo.totalSupply());
+    }
+
+    function testCanStillPerformActionsWhilePaused(
+        uint256 mintAmount1,
+        uint256 mintAmount2,
+        uint256 mintAmount3
+    ) public {
+        mintAmount1 = bound(mintAmount1, 0, MAX_ALLOWED_SUPPLY / 4);
+        mintAmount2 = bound(mintAmount2, 0, MAX_ALLOWED_SUPPLY / 4);
+        mintAmount3 = bound(mintAmount3, 0, MAX_ALLOWED_SUPPLY / 4);
+        uint256 mintAmount4 = mintAmount1 + mintAmount2 + mintAmount3;
+
+        // giving address(100) address(200) and the minter their mintAmounts
+        vm.startPrank(minter);
+        usdglo.mint(address(100), mintAmount1);
+        usdglo.mint(address(200), mintAmount2);
+        usdglo.mint(minter, mintAmount3);
+        vm.stopPrank();
+
+        // pause the contract and check it was paused
+        assertEq(usdglo.paused(), false);
+        vm.prank(pauser);
+        usdglo.pause();
+        assertEq(usdglo.paused(), true);
+
+        // giving address(100) mintAmount usdglo (Mint)
+        vm.startPrank(minter);
+        vm.expectRevert("Pausable: paused");
+        usdglo.mint(address(100), mintAmount4);
+
+        // burning minter mintAmount usdglo (Burn)
+        vm.expectRevert("Pausable: paused");
+        usdglo.burn(mintAmount3);
+        vm.stopPrank();
+
+        // sending 100 usdglo to minter (Transfer)
+        vm.startPrank(address(100));
+        vm.expectRevert("Pausable: paused");
+        usdglo.transfer(minter, mintAmount1);
+
+        // setting up approval for transferfrom
+        usdglo.approve(address(200), mintAmount1);
+        vm.stopPrank();
+
+        // sending 1e6 usdglo to minter (TransferFrom)
+        vm.startPrank(address(200));
+        vm.expectRevert("Pausable: paused");
+        usdglo.transferFrom(address(100), minter, mintAmount1);
+        vm.stopPrank();
+
+        // destroying denylist funds !THIS SHOULD WORK!
+        vm.startPrank(denylister);
+        usdglo.denylist(address(100));
+        usdglo.destroyDenylistedFunds(address(100));
+    }
+
+    function testCanBalanceOfReturnIncorrectValue(uint256 mintAmount) public {
+        mintAmount = bound(mintAmount, 0, MAX_ALLOWED_SUPPLY);
+
+        //mintAmount to address(100)
+        vm.prank(minter);
+        usdglo.mint(address(100), mintAmount);
+
+        // ensure that the supply is only what has been minted
+        assertEq(mintAmount, usdglo.balanceOf(address(100)));
+
+        // check that adding a user to the denylist won't impact their balance returned by balanceOf
+        vm.startPrank(denylister);
+        usdglo.denylist(address(100));
+        assertEq(mintAmount, usdglo.balanceOf(address(100)));
+
+        // check that destroying a user's funds will impact their balance returned by balanceOf
+        usdglo.destroyDenylistedFunds(address(100));
+        assertEq(0, usdglo.balanceOf(address(100)));
+    }
+
+    function testMaxSupplyAtOneAddress(uint256 transferAmount) public {
+        transferAmount = bound(transferAmount, 0, MAX_ALLOWED_SUPPLY);
+
+        // mint max allowed supply to address(100)
+        vm.prank(minter);
+        usdglo.mint(address(100), MAX_ALLOWED_SUPPLY);
+
+        // testing sending to self (Transfer)
+        vm.prank(address(100));
+        usdglo.transfer(address(100), transferAmount);
+
+        // check that the user is not denylisted and store the balance
+        assertEq(usdglo.isDenylisted(address(100)), false);
+        uint256 balanceBefore = usdglo.balanceOf(address(100));
+
+        // denylist the user
+        vm.prank(denylister);
+        usdglo.denylist(address(100));
+
+        // check that the denylist works and that the balance returns the same amount as before
+        assertEq(usdglo.isDenylisted(address(100)), true);
+        assertEq(usdglo.balanceOf(address(100)), balanceBefore);
     }
 }
