@@ -34,6 +34,9 @@ const config: HardhatUserConfig = {
     polygonMumbai: {
       url: process.env.NETWORK_MUMBAI_URL as string,
     },
+    optimisticEthereum: {
+      url: process.env.NETWORK_OPTIMISM_URL as string,
+    },
   },
   etherscan: {
     apiKey: {
@@ -41,6 +44,7 @@ const config: HardhatUserConfig = {
       polygon: process.env.POLYGONSCAN_POLYGON_API_KEY as string,
       goerli: process.env.ETHERSCAN_GOERLI_API_KEY as string,
       polygonMumbai: process.env.POLYGONSCAN_MUMBAI_API_KEY as string,
+      optimisticEthereum: process.env.OPTIMISM_MAINNET_API_KEY as string,
     },
   },
 };
