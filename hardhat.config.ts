@@ -34,6 +34,9 @@ const config: HardhatUserConfig = {
     polygonMumbai: {
       url: process.env.NETWORK_MUMBAI_URL as string,
     },
+    base: {
+      url: process.env.NETWORK_BASE_URL as string,
+    },
   },
   etherscan: {
     apiKey: {
@@ -41,7 +44,18 @@ const config: HardhatUserConfig = {
       polygon: process.env.POLYGONSCAN_POLYGON_API_KEY as string,
       goerli: process.env.ETHERSCAN_GOERLI_API_KEY as string,
       polygonMumbai: process.env.POLYGONSCAN_MUMBAI_API_KEY as string,
+      base: process.env.BASESCAN_MAINNET_API_KEY as string,
     },
+    customChains: [
+      {
+        network: "base",
+        chainId: 8453,
+        urls: {
+          apiURL: "https://api.basescan.org/api",
+          browserURL: "https://basescan.org/",
+        },
+      },
+    ],
   },
 };
 
