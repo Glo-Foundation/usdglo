@@ -34,6 +34,9 @@ const config: HardhatUserConfig = {
     polygonMumbai: {
       url: process.env.NETWORK_MUMBAI_URL as string,
     },
+    gnosisChain: {
+      url: process.env.NETWORK_GNOSIS_CHAIN_URL as string,
+    },
   },
   etherscan: {
     apiKey: {
@@ -41,7 +44,18 @@ const config: HardhatUserConfig = {
       polygon: process.env.POLYGONSCAN_POLYGON_API_KEY as string,
       goerli: process.env.ETHERSCAN_GOERLI_API_KEY as string,
       polygonMumbai: process.env.POLYGONSCAN_MUMBAI_API_KEY as string,
+      gnosisChain: process.env.GNOSISSCAN_MAINNET_API_KEY as string,
     },
+    customChains: [
+      {
+        network: "gnosisChain",
+        chainId: 100,
+        urls: {
+          apiURL: "https://api.gnosisscan.io/api",
+          browserURL: "https://gnosisscan.io/",
+        },
+      },
+    ],
   },
 };
 
