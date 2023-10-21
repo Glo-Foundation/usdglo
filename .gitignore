@@ -13,6 +13,7 @@ artifacts
 !.openzeppelin/unknown-424.json
 !.openzeppelin/unknown-100.json
 !.openzeppelin/unknown-1101.json
+!.openzeppelin/unknown-8453.json
 
 # Foundry files
 out
