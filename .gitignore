@@ -10,7 +10,7 @@ cache
 artifacts
 
 .openzeppelin/unknown-*.json
-!.openzeppelin/unknown-10.json
+!.openzeppelin/unknown-42220.json
 
 # Foundry files
 out
