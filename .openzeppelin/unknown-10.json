@@ -3,14 +3,14 @@
   "proxies": [
     {
       "address": "0x4F604735c1cF31399C6E711D5962b2B3E0225AD3",
-      "txHash": "0x18a4300eaa0f4cb086c3b812caad3ce403c3abe5b40f54ad63a6748d0cd6404d",
+      "txHash": "0xfca3b996e45553cf6d7d8dcd07b612a02aadb2e66867bd9466b1b3fede7baa3d",
       "kind": "uups"
     }
   ],
   "impls": {
     "5e3d553fa54ecd734f5766e19234fe813e324193dc8fc8ae7916c33682bfe909": {
       "address": "0x12bca0CEf552A570FCba860c0CAD9847D10712A7",
-      "txHash": "0xb84b36806319809464b3fcc459a664773ae4a032814d504947ac4112524700da",
+      "txHash": "0xe14a3662ca840d9e92638d54fd5f3c0724b4d5518c38ce2a538501062618bbab",
       "layout": {
         "solcVersion": "0.8.7",
         "storage": [
@@ -45,7 +45,7 @@
             "slot": "51",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "ERC20Upgradeable",
-            "src": "contracts/ERC20Upgradeable.sol:45"
+            "src": "contracts/v1/ERC20Upgradeable.sol:45"
           },
           {
             "label": "_allowances",
@@ -53,7 +53,7 @@
             "slot": "52",
             "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
             "contract": "ERC20Upgradeable",
-            "src": "contracts/ERC20Upgradeable.sol:47"
+            "src": "contracts/v1/ERC20Upgradeable.sol:47"
           },
           {
             "label": "_totalSupply",
@@ -61,7 +61,7 @@
             "slot": "53",
             "type": "t_uint256",
             "contract": "ERC20Upgradeable",
-            "src": "contracts/ERC20Upgradeable.sol:49"
+            "src": "contracts/v1/ERC20Upgradeable.sol:49"
           },
           {
             "label": "_name",
@@ -69,7 +69,7 @@
             "slot": "54",
             "type": "t_string_storage",
             "contract": "ERC20Upgradeable",
-            "src": "contracts/ERC20Upgradeable.sol:51"
+            "src": "contracts/v1/ERC20Upgradeable.sol:51"
           },
           {
             "label": "_symbol",
@@ -77,7 +77,7 @@
             "slot": "55",
             "type": "t_string_storage",
             "contract": "ERC20Upgradeable",
-            "src": "contracts/ERC20Upgradeable.sol:52"
+            "src": "contracts/v1/ERC20Upgradeable.sol:52"
           },
           {
             "label": "__gap",
@@ -85,7 +85,7 @@
             "slot": "56",
             "type": "t_array(t_uint256)45_storage",
             "contract": "ERC20Upgradeable",
-            "src": "contracts/ERC20Upgradeable.sol:596"
+            "src": "contracts/v1/ERC20Upgradeable.sol:596"
           },
           {
             "label": "_paused",
@@ -219,8 +219,8 @@
       }
     },
     "e7300ce699063adaca8f40675ce9c04d968211e6b7484596b85290929706d64c": {
-      "address": "0x693B51C1Ce5c6E98D71C26eD2c6B3764D8DB9cf8",
-      "txHash": "0x7100de999d012f51d9af7816b470477e8655ce5173001f56be1521b57c53f4cd",
+      "address": "0xE0350a606625e94dcf9A59b839a87ff0Dcf3Ce6f",
+      "txHash": "0xeab92de9c0b3272e7a7035dffa964976f437fdf9a4c7b4e45c0ed02a5d8bd0dd",
       "layout": {
         "solcVersion": "0.8.7",
         "storage": [
@@ -429,8 +429,8 @@
       }
     },
     "a0a3c38ff9adc93a5330c51981d2527bca1e024c3073affc518dbca1cdb80137": {
-      "address": "0xF8Dbe4f52b7d4fe90CD360AA4f49B7A66783C56f",
-      "txHash": "0x635fdafa7b32d8cd754ecd805d5da5d8c55b8682aa56a3a8b17a0917e3a7ecd7",
+      "address": "0x693B51C1Ce5c6E98D71C26eD2c6B3764D8DB9cf8",
+      "txHash": "0x6fa12746217d0832c8723ce95c2de120e302f9a2086da687a689f7dceab37576",
       "layout": {
         "solcVersion": "0.8.7",
         "storage": [
