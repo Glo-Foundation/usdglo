@@ -36,8 +36,12 @@ const config: HardhatUserConfig = {
     },
     celo: {
       url: process.env.NETWORK_CELO_URL as string,
+    },
     optimisticEthereum: {
       url: process.env.NETWORK_OPTIMISM_URL as string,
+    },
+    arbitrumGoerli: {
+      url: process.env.NETWORK_ARBITRUM_GOERLI_URL as string,
     },
   },
   etherscan: {
@@ -48,6 +52,7 @@ const config: HardhatUserConfig = {
       polygonMumbai: process.env.POLYGONSCAN_MUMBAI_API_KEY as string,
       celo: process.env.CELOSCAN_MAINNET_API_KEY as string,
       optimisticEthereum: process.env.OPTIMISM_MAINNET_API_KEY as string,
+      arbitrumGoerli: process.env.ARBISCAN_ARBIGOERLI_API_KEY as string,
     },
     customChains: [
       {
@@ -56,6 +61,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.celoscan.io/api",
           browserURL: "https://celoscan.io/",
+        },
+      },
+      {
+        network: "arbitrumGoerli",
+        chainId: 421613,
+        urls: {
+          apiURL: "https://api-goerli.arbiscan.io/api",
+          browserURL: "https://goerli.arbiscan.io",
         },
       },
     ],
