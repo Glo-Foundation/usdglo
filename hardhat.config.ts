@@ -36,6 +36,7 @@ const config: HardhatUserConfig = {
     },
     celo: {
       url: process.env.NETWORK_CELO_URL as string,
+    },
     optimisticEthereum: {
       url: process.env.NETWORK_OPTIMISM_URL as string,
     },
