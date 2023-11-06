@@ -12,7 +12,7 @@ It requires the following env variables to be set (assuming mainnet):
 2. `DEFENDER_API_SECRET`
 3. `RELAYER_DEPLOYER_KEY`
 4. `RELAYER_DEPLOYER_SECRET`
-5. `INITIAL_ADMIN_ADDRESS`
+5. `INITIAL_ADMIN_ADDRESS` --> this should be the wallet address you want to have admin rights, not the relayer address
 6. `NETWORK_MAINNET_URL`
 
 ## proposeUpgrade.ts
