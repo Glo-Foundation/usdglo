@@ -40,6 +40,9 @@ const config: HardhatUserConfig = {
     optimisticEthereum: {
       url: process.env.NETWORK_OPTIMISM_URL as string,
     },
+    arbitrum: {
+      url: process.env.NETWORK_ARBITRUM_ONE_URL as string,
+    },
   },
   etherscan: {
     apiKey: {
@@ -49,6 +52,7 @@ const config: HardhatUserConfig = {
       polygonMumbai: process.env.POLYGONSCAN_MUMBAI_API_KEY as string,
       celo: process.env.CELOSCAN_MAINNET_API_KEY as string,
       optimisticEthereum: process.env.OPTIMISM_MAINNET_API_KEY as string,
+      arbitrum: process.env.ARBISCAN_ARBITRUM_API_KEY as string,
     },
     customChains: [
       {
@@ -57,6 +61,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.celoscan.io/api",
           browserURL: "https://celoscan.io/",
+        },
+      },
+      {
+        network: "arbitrum",
+        chainId: 42161,
+        urls: {
+          apiURL: "https://api.arbiscan.io/api",
+          browserURL: "https://arbiscan.io/",
         },
       },
     ],
